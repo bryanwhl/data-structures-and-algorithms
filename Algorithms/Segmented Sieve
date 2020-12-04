@@ -1,0 +1,67 @@
+#include <bits/stdc++.h> 
+
+using namespace std;
+
+//Learned this algorithm for https://open.kattis.com/problems/primesieve but time limit exceeded
+
+int main(){
+    ios::sync_with_stdio(false); cin.tie(NULL);
+    int n, query; cin >> n >> query;
+    n++; //off-by-1 error: algorithm checks for prime smaller than n
+    int segmentSize = floor(sqrt(n)) + 1;
+    
+    //do one pass of sieve from 0 to root n
+    vector<bool> bucket(segmentSize+1, false);
+    for (int q=2; q*q<segmentSize; q++){
+        if (!bucket[q]){
+            for (int w=q*q; w<segmentSize; w+=q){
+                bucket[w] = true;
+            }
+        }
+    }
+    
+    //store the prime number found in the first sieve into firstPrime vector
+    vector<int> firstPrime;
+    unordered_set<int> allPrime;
+    for (int q=2; q<segmentSize; q++){
+        if (!bucket[q]){
+            firstPrime.push_back(q);
+            allPrime.insert(q);
+
+        }
+    }
+    
+    //continue sieving by segments of size = segmentSize
+    int lower = segmentSize;
+    int higher = segmentSize * 2;
+    while(lower < n){
+        if (higher >= n){
+            higher = n;
+        }
+        vector<bool> segmentBucket(segmentSize+1, false);
+        for (int q=0; q<firstPrime.size(); q++){
+            int lowerLimit = floor(lower/firstPrime[q]) * firstPrime[q];
+            if (lowerLimit < lower){
+                lowerLimit += firstPrime[q];
+            }
+            for (int e=lowerLimit; e<higher; e+=firstPrime[q]){
+                segmentBucket[e-lower] = true;
+            }
+        }
+        for (int q=lower; q<higher; q++){
+            if (!segmentBucket[q-lower]){
+                allPrime.insert(q);
+            }
+        }
+        lower += segmentSize;
+        higher += segmentSize;
+    }
+    
+    cout << allPrime.size() << "\n";
+    
+    int num;
+    for (int q=0; q<query; q++){
+        cin >> num;
+        cout << allPrime.count(num) << "\n";
+    }
+}
